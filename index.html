@@ -21,8 +21,6 @@
     --text-muted:      #898781;
     --gridline:        #e1e0d9;
     --baseline:        #c3c2b7;
-    --series-1:        #2a78d6;
-    --series-1-hover:  #1c5cab;
     --border:          rgba(11, 11, 11, 0.10);
     --tooltip-bg:      #0b0b0b;
     --tooltip-text:    #ffffff;
@@ -37,8 +35,6 @@
       --text-muted:      #898781;
       --gridline:        #2c2c2a;
       --baseline:        #383835;
-      --series-1:        #3987e5;
-      --series-1-hover:  #5598e7;
       --border:          rgba(255, 255, 255, 0.10);
       --tooltip-bg:      #ffffff;
       --tooltip-text:    #0b0b0b;
@@ -53,8 +49,6 @@
     --text-muted:      #898781;
     --gridline:        #2c2c2a;
     --baseline:        #383835;
-    --series-1:        #3987e5;
-    --series-1-hover:  #5598e7;
     --border:          rgba(255, 255, 255, 0.10);
     --tooltip-bg:      #ffffff;
     --tooltip-text:    #0b0b0b;
@@ -128,9 +122,8 @@
   }
   .bar {
     height: 20px;
-    background: var(--series-1);
     border-radius: 0 4px 4px 0;
-    transition: background-color 120ms ease, filter 120ms ease;
+    transition: filter 120ms ease;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -138,7 +131,6 @@
     overflow: hidden;
   }
   .bar .bar-inline-label {
-    color: #ffffff;
     font-size: 10.5px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
@@ -147,13 +139,51 @@
   }
   .row-track:hover .bar,
   .row-track:focus-visible .bar {
-    background: var(--series-1-hover);
+    filter: brightness(1.12);
   }
   .row-track:focus-visible {
-    outline: 2px solid var(--series-1-hover);
+    outline: 2px solid var(--text-primary);
     outline-offset: 2px;
     border-radius: 4px;
   }
+
+  .legend {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 22px;
+  }
+  .legend-title {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .legend-scale {
+    position: relative;
+    flex: 1 1 auto;
+    max-width: 320px;
+  }
+  .legend-gradient {
+    height: 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+  }
+  .legend-ticks {
+    position: relative;
+    height: 16px;
+    margin-top: 3px;
+  }
+  .legend-ticks span {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    font-size: 10.5px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .legend-ticks span:first-child { transform: translateX(0); }
+  .legend-ticks span:last-child { transform: translateX(-100%); }
   .row-value {
     grid-column: 3;
     display: flex;
@@ -281,14 +311,22 @@
         <h1>Phish show openers — average show rating</h1>
         <p class="subtitle">
           Songs that have opened at least 10 Phish shows, ranked by the average
-          rating of those shows. The number inside each bar is how many times
-          that song has opened.
+          rating of those shows. Bar color shows how often each song has opened
+          — the number inside each bar is the exact count.
         </p>
       </div>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode">Dark mode</button>
     </div>
 
-    <div class="chart-grid" id="chartGrid" role="img" aria-label="Bar chart of average show rating by opener song">
+    <div class="legend" id="legend">
+      <span class="legend-title">Times opened</span>
+      <div class="legend-scale">
+        <div class="legend-gradient" id="legendGradient"></div>
+        <div class="legend-ticks" id="legendTicks"></div>
+      </div>
+    </div>
+
+    <div class="chart-grid" id="chartGrid" role="img" aria-label="Bar chart of average show rating by opener song, colored by how often each song has opened">
       <div class="gridlines" id="gridlines"></div>
       <!-- rows injected by JS -->
     </div>
@@ -316,10 +354,12 @@
     </details>
 
     <footer class="note">
-      Source: Phish.net setlist and show-rating data. Bars show the average
-      user rating (0–5 scale) of shows each song opened. Opener = first song
-      of set one; shows flagged as non-standard (exclude) are omitted. Limited
-      to songs with 10 or more opens.
+      Source: Phish.net setlist and show-rating data. Bar length shows the
+      average user rating (0–5 scale) of shows each song opened; bar color
+      shows how many times that song has opened (lighter = fewer, darker =
+      more — see legend above). Opener = first song of set one; shows flagged
+      as non-standard (exclude) are omitted. Limited to songs with 10 or more
+      opens.
     </footer>
   </div>
 </div>
@@ -338,6 +378,74 @@
   const axisTicks = document.getElementById('axisTicks');
   const tooltip = document.getElementById('tooltip');
   const tableBody = document.querySelector('#dataTable tbody');
+  const legendGradient = document.getElementById('legendGradient');
+  const legendTicks = document.getElementById('legendTicks');
+
+  // Sequential "volume" ramp (times opened): one hue, light -> dark, from the
+  // skill's documented palette (palette.md, blue sequential steps 100-700).
+  const VOLUME_RAMP = [
+    '#cde2fb', '#b7d3f6', '#9ec5f4', '#86b6ef', '#6da7ec', '#5598e7',
+    '#3987e5', '#2a78d6', '#256abf', '#1c5cab', '#184f95', '#104281', '#0d366b',
+  ];
+  const INK_LIGHT = [255, 255, 255];
+  const INK_DARK = [11, 11, 11];
+
+  const hexToRgb = (hex) => {
+    const n = parseInt(hex.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const rgbToHex = ([r, g, b]) =>
+    '#' + [r, g, b].map((c) => Math.round(c).toString(16).padStart(2, '0')).join('');
+  const lerpRgb = (a, b, frac) => [
+    a[0] + (b[0] - a[0]) * frac,
+    a[1] + (b[1] - a[1]) * frac,
+    a[2] + (b[2] - a[2]) * frac,
+  ];
+  const colorForT = (t) => {
+    const clamped = Math.max(0, Math.min(1, t));
+    const position = clamped * (VOLUME_RAMP.length - 1);
+    const i0 = Math.floor(position);
+    const i1 = Math.min(i0 + 1, VOLUME_RAMP.length - 1);
+    const frac = position - i0;
+    return rgbToHex(lerpRgb(hexToRgb(VOLUME_RAMP[i0]), hexToRgb(VOLUME_RAMP[i1]), frac));
+  };
+  const relLuminance = ([r, g, b]) => {
+    const toLinear = (c) => {
+      const s = c / 255;
+      return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+    };
+    const [rl, gl, bl] = [toLinear(r), toLinear(g), toLinear(b)];
+    return 0.2126 * rl + 0.7152 * gl + 0.0722 * bl;
+  };
+  const contrastRatio = (rgbA, rgbB) => {
+    const lA = relLuminance(rgbA), lB = relLuminance(rgbB);
+    const [lighter, darker] = lA > lB ? [lA, lB] : [lB, lA];
+    return (lighter + 0.05) / (darker + 0.05);
+  };
+  const pickInk = (fillRgb) =>
+    contrastRatio(fillRgb, INK_LIGHT) >= contrastRatio(fillRgb, INK_DARK)
+      ? 'rgb(255,255,255)'
+      : 'rgb(11,11,11)';
+
+  const volumeValues = data.map((d) => d.timesOpened);
+  const volumeMin = Math.min(...volumeValues);
+  const volumeMax = Math.max(...volumeValues);
+  // Square-root scale: volume is heavily right-skewed (a few huge outliers
+  // like Chalk Dust Torture at 99 vs. a cluster of songs at 10-20), so a
+  // linear scale would make most bars nearly indistinguishable in color.
+  const volumeToT = (value) =>
+    (Math.sqrt(value) - Math.sqrt(volumeMin)) / (Math.sqrt(volumeMax) - Math.sqrt(volumeMin));
+
+  legendGradient.style.background =
+    'linear-gradient(to right, ' + VOLUME_RAMP.join(', ') + ')';
+  const legendMidValue =
+    Math.round((((Math.sqrt(volumeMin) + Math.sqrt(volumeMax)) / 2) ** 2) / 5) * 5;
+  for (const v of [volumeMin, legendMidValue, volumeMax]) {
+    const span = document.createElement('span');
+    span.style.left = (volumeToT(v) * 100) + '%';
+    span.textContent = v;
+    legendTicks.appendChild(span);
+  }
 
   for (const t of ticks) {
     const pct = (t / domainMax) * 100;
@@ -374,11 +482,14 @@
         ' over ' + d.timesOpened + ' opens',
     );
 
+    const fillColor = colorForT(volumeToT(d.timesOpened));
     const bar = document.createElement('div');
     bar.className = 'bar';
     bar.style.width = (d.avgRating / domainMax * 100) + '%';
+    bar.style.background = fillColor;
     const inlineLabel = document.createElement('span');
     inlineLabel.className = 'bar-inline-label';
+    inlineLabel.style.color = pickInk(hexToRgb(fillColor));
     inlineLabel.textContent = d.timesOpened + ' shows';
     bar.appendChild(inlineLabel);
     track.appendChild(bar);
