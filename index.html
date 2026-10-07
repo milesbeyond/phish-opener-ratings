@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Phish Show Openers — Average Show Rating</title>
+<title>Phish Song Position vs. Average Show Rating</title>
 <style>
   :root { color-scheme: light; }
   * { box-sizing: border-box; }
@@ -95,6 +95,33 @@
     cursor: pointer;
   }
   .theme-toggle:hover { color: var(--text-primary); }
+
+  .controls-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 20px;
+    flex-wrap: wrap;
+  }
+  .controls-row label {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .metric-select {
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  .controls-row .vs {
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
 
   .chart-grid {
     display: grid;
@@ -308,25 +335,27 @@
   <div class="viz-card">
     <div class="viz-head">
       <div>
-        <h1>Phish show openers — average show rating</h1>
-        <p class="subtitle">
-          Songs that have opened at least 10 Phish shows, ranked by the average
-          rating of those shows. Bar color shows how often each song has opened
-          — the number inside each bar is the exact count.
-        </p>
+        <h1>Phish song position vs. average show rating</h1>
+        <p class="subtitle" id="subtitle"></p>
       </div>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode">Dark mode</button>
     </div>
 
+    <div class="controls-row">
+      <label for="metricSelect">Compare</label>
+      <select class="metric-select" id="metricSelect"></select>
+      <span class="vs">vs. average show rating</span>
+    </div>
+
     <div class="legend" id="legend">
-      <span class="legend-title">Times opened</span>
+      <span class="legend-title" id="legendTitle">Times opened</span>
       <div class="legend-scale">
         <div class="legend-gradient" id="legendGradient"></div>
         <div class="legend-ticks" id="legendTicks"></div>
       </div>
     </div>
 
-    <div class="chart-grid" id="chartGrid" role="img" aria-label="Bar chart of average show rating by opener song, colored by how often each song has opened">
+    <div class="chart-grid" id="chartGrid" role="img" aria-label="Bar chart of average show rating by song position">
       <div class="gridlines" id="gridlines"></div>
       <!-- rows injected by JS -->
     </div>
@@ -347,20 +376,13 @@
       <table id="dataTable">
         <caption>Same data as the chart above, in ranked order.</caption>
         <thead>
-          <tr><th>Song</th><th>Average rating</th><th>Times opened</th></tr>
+          <tr><th>Song</th><th>Average rating</th><th id="tableCountHeader">Times</th></tr>
         </thead>
         <tbody></tbody>
       </table>
     </details>
 
-    <footer class="note">
-      Source: Phish.net setlist and show-rating data. Bar length shows the
-      average user rating (0–5 scale) of shows each song opened; bar color
-      shows how many times that song has opened (lighter = fewer, darker =
-      more — see legend above). Opener = first song of set one; shows flagged
-      as non-standard (exclude) are omitted. Limited to songs with 10 or more
-      opens.
-    </footer>
+    <footer class="note" id="footerNote"></footer>
   </div>
 
   <div class="tooltip" id="tooltip" role="status" aria-live="polite">
@@ -369,10 +391,23 @@
 </div>
 
 <script>
-  const data = [{"song":"Tweezer","avgRating":4.278,"timesOpened":10},{"song":"My Soul","avgRating":4.2673,"timesOpened":11},{"song":"Ghost","avgRating":4.2145,"timesOpened":11},{"song":"Punch You in the Eye","avgRating":4.1722,"timesOpened":32},{"song":"Free","avgRating":4.1605,"timesOpened":21},{"song":"Ya Mar","avgRating":4.0917,"timesOpened":18},{"song":"My Friend, My Friend","avgRating":4.0907,"timesOpened":29},{"song":"Fluffhead","avgRating":4.0638,"timesOpened":13},{"song":"Axilla","avgRating":4.0408,"timesOpened":12},{"song":"NICU","avgRating":4.026,"timesOpened":10},{"song":"Theme from the Bottom","avgRating":4.02,"timesOpened":10},{"song":"Carini","avgRating":4.013,"timesOpened":20},{"song":"The Moma Dance","avgRating":4.0115,"timesOpened":27},{"song":"Rift","avgRating":3.9961,"timesOpened":18},{"song":"46 Days","avgRating":3.9957,"timesOpened":14},{"song":"Bathtub Gin","avgRating":3.9936,"timesOpened":14},{"song":"Maze","avgRating":3.9909,"timesOpened":11},{"song":"Tube","avgRating":3.9869,"timesOpened":13},{"song":"Buried Alive","avgRating":3.9687,"timesOpened":83},{"song":"Wilson","avgRating":3.9649,"timesOpened":47},{"song":"Wolfman's Brother","avgRating":3.9643,"timesOpened":14},{"song":"Llama","avgRating":3.9484,"timesOpened":62},{"song":"First Tube","avgRating":3.925,"timesOpened":24},{"song":"Sample in a Jar","avgRating":3.9053,"timesOpened":38},{"song":"Julius","avgRating":3.9024,"timesOpened":17},{"song":"Fee","avgRating":3.9,"timesOpened":11},{"song":"Party Time","avgRating":3.879,"timesOpened":10},{"song":"Chalk Dust Torture","avgRating":3.8468,"timesOpened":99},{"song":"Divided Sky","avgRating":3.8437,"timesOpened":19},{"song":"Stealing Time From the Faulty Plan","avgRating":3.84,"timesOpened":10},{"song":"Runaway Jim","avgRating":3.83,"timesOpened":95},{"song":"Cars Trucks Buses","avgRating":3.8235,"timesOpened":20},{"song":"AC/DC Bag","avgRating":3.809,"timesOpened":67},{"song":"Crowd Control","avgRating":3.8041,"timesOpened":17},{"song":"Mike's Song","avgRating":3.7883,"timesOpened":30},{"song":"Kill Devil Falls","avgRating":3.77,"timesOpened":19},{"song":"Funky Bitch","avgRating":3.76,"timesOpened":23},{"song":"Down with Disease","avgRating":3.7524,"timesOpened":21},{"song":"The Landlady","avgRating":3.7273,"timesOpened":49},{"song":"Poor Heart","avgRating":3.6854,"timesOpened":13},{"song":"Carolina","avgRating":3.6842,"timesOpened":12},{"song":"Suzy Greenberg","avgRating":3.6734,"timesOpened":41},{"song":"Cavern","avgRating":3.6517,"timesOpened":12},{"song":"The Curtain","avgRating":3.6294,"timesOpened":18},{"song":"The Oh Kee Pa Ceremony","avgRating":3.6294,"timesOpened":18},{"song":"Possum","avgRating":3.6,"timesOpened":32},{"song":"Dinner and a Movie","avgRating":3.5888,"timesOpened":17},{"song":"David Bowie","avgRating":3.5823,"timesOpened":13},{"song":"Golgi Apparatus","avgRating":3.5707,"timesOpened":59},{"song":"Alumni Blues","avgRating":3.53,"timesOpened":13},{"song":"The Sloth","avgRating":3.4682,"timesOpened":11},{"song":"I Didn't Know","avgRating":3.4553,"timesOpened":15},{"song":"Reba","avgRating":3.2808,"timesOpened":12},{"song":"You Enjoy Myself","avgRating":3.1715,"timesOpened":13}];
+  const METRICS = {
+    set1Opener: { label: 'Set 1 opener', position: 'first song of set one', volumeLabel: 'opened Set 1' },
+    set1Closer: { label: 'Set 1 closer', position: 'last song of set one', volumeLabel: 'closed Set 1' },
+    set2Opener: { label: 'Set 2 opener', position: 'first song of set two', volumeLabel: 'opened Set 2' },
+    set2Closer: { label: 'Set 2 closer', position: 'last song of set two', volumeLabel: 'closed Set 2' },
+    encore: { label: 'Encore', position: 'first song of the encore', volumeLabel: 'opened the encore' },
+  };
+  const DATASETS = {
+    set1Opener: [{"song":"Tweezer","avgRating":4.278,"timesOpened":10},{"song":"My Soul","avgRating":4.2673,"timesOpened":11},{"song":"Ghost","avgRating":4.2145,"timesOpened":11},{"song":"Punch You in the Eye","avgRating":4.1722,"timesOpened":32},{"song":"Free","avgRating":4.1605,"timesOpened":21},{"song":"Ya Mar","avgRating":4.0917,"timesOpened":18},{"song":"My Friend, My Friend","avgRating":4.0907,"timesOpened":29},{"song":"Fluffhead","avgRating":4.0638,"timesOpened":13},{"song":"Axilla","avgRating":4.0408,"timesOpened":12},{"song":"NICU","avgRating":4.026,"timesOpened":10},{"song":"Theme from the Bottom","avgRating":4.02,"timesOpened":10},{"song":"Carini","avgRating":4.013,"timesOpened":20},{"song":"The Moma Dance","avgRating":4.0115,"timesOpened":27},{"song":"Rift","avgRating":3.9961,"timesOpened":18},{"song":"46 Days","avgRating":3.9957,"timesOpened":14},{"song":"Bathtub Gin","avgRating":3.9936,"timesOpened":14},{"song":"Maze","avgRating":3.9909,"timesOpened":11},{"song":"Tube","avgRating":3.9869,"timesOpened":13},{"song":"Buried Alive","avgRating":3.9687,"timesOpened":83},{"song":"Wilson","avgRating":3.9649,"timesOpened":47},{"song":"Wolfman's Brother","avgRating":3.9643,"timesOpened":14},{"song":"Llama","avgRating":3.9484,"timesOpened":62},{"song":"First Tube","avgRating":3.925,"timesOpened":24},{"song":"Sample in a Jar","avgRating":3.9053,"timesOpened":38},{"song":"Julius","avgRating":3.9024,"timesOpened":17},{"song":"Fee","avgRating":3.9,"timesOpened":11},{"song":"Party Time","avgRating":3.879,"timesOpened":10},{"song":"Chalk Dust Torture","avgRating":3.8468,"timesOpened":99},{"song":"Divided Sky","avgRating":3.8437,"timesOpened":19},{"song":"Stealing Time From the Faulty Plan","avgRating":3.84,"timesOpened":10},{"song":"Runaway Jim","avgRating":3.83,"timesOpened":95},{"song":"Cars Trucks Buses","avgRating":3.8235,"timesOpened":20},{"song":"AC/DC Bag","avgRating":3.809,"timesOpened":67},{"song":"Crowd Control","avgRating":3.8041,"timesOpened":17},{"song":"Mike's Song","avgRating":3.7883,"timesOpened":30},{"song":"Kill Devil Falls","avgRating":3.77,"timesOpened":19},{"song":"Funky Bitch","avgRating":3.76,"timesOpened":23},{"song":"Down with Disease","avgRating":3.7524,"timesOpened":21},{"song":"The Landlady","avgRating":3.7273,"timesOpened":49},{"song":"Poor Heart","avgRating":3.6854,"timesOpened":13},{"song":"Carolina","avgRating":3.6842,"timesOpened":12},{"song":"Suzy Greenberg","avgRating":3.6734,"timesOpened":41},{"song":"Cavern","avgRating":3.6517,"timesOpened":12},{"song":"The Curtain","avgRating":3.6294,"timesOpened":18},{"song":"The Oh Kee Pa Ceremony","avgRating":3.6294,"timesOpened":18},{"song":"Possum","avgRating":3.6,"timesOpened":32},{"song":"Dinner and a Movie","avgRating":3.5888,"timesOpened":17},{"song":"David Bowie","avgRating":3.5823,"timesOpened":13},{"song":"Golgi Apparatus","avgRating":3.5707,"timesOpened":59},{"song":"Alumni Blues","avgRating":3.53,"timesOpened":13},{"song":"The Sloth","avgRating":3.4682,"timesOpened":11},{"song":"I Didn't Know","avgRating":3.4553,"timesOpened":15},{"song":"Reba","avgRating":3.2808,"timesOpened":12},{"song":"You Enjoy Myself","avgRating":3.1715,"timesOpened":13}],
+    set1Closer: [{"song":"Walls of the Cave","avgRating":4.1451,"timesOpened":49},{"song":"Sample in a Jar","avgRating":4.1438,"timesOpened":26},{"song":"Split Open and Melt","avgRating":4.1145,"timesOpened":42},{"song":"More","avgRating":4.075,"timesOpened":16},{"song":"Bold As Love","avgRating":4.0146,"timesOpened":13},{"song":"Fluffhead","avgRating":4.0064,"timesOpened":22},{"song":"Wolfman's Brother","avgRating":4.006,"timesOpened":10},{"song":"Bathtub Gin","avgRating":3.9982,"timesOpened":28},{"song":"Sand","avgRating":3.9923,"timesOpened":13},{"song":"The Squirming Coil","avgRating":3.99,"timesOpened":50},{"song":"Character Zero","avgRating":3.9795,"timesOpened":79},{"song":"Tweezer Reprise","avgRating":3.9707,"timesOpened":14},{"song":"Ghost","avgRating":3.96,"timesOpened":11},{"song":"Cavern","avgRating":3.9588,"timesOpened":99},{"song":"Chalk Dust Torture","avgRating":3.9508,"timesOpened":49},{"song":"Loving Cup","avgRating":3.9486,"timesOpened":14},{"song":"Run Like an Antelope","avgRating":3.8863,"timesOpened":195},{"song":"Stash","avgRating":3.8827,"timesOpened":15},{"song":"Drift While You're Sleeping","avgRating":3.8613,"timesOpened":16},{"song":"Golgi Apparatus","avgRating":3.8512,"timesOpened":89},{"song":"First Tube","avgRating":3.8445,"timesOpened":11},{"song":"46 Days","avgRating":3.8412,"timesOpened":17},{"song":"Runaway Jim","avgRating":3.837,"timesOpened":30},{"song":"Suzy Greenberg","avgRating":3.8329,"timesOpened":41},{"song":"David Bowie","avgRating":3.8212,"timesOpened":163},{"song":"Taste","avgRating":3.796,"timesOpened":10},{"song":"Frankenstein","avgRating":3.7847,"timesOpened":15},{"song":"Julius","avgRating":3.7733,"timesOpened":27},{"song":"Slave to the Traffic Light","avgRating":3.7675,"timesOpened":12},{"song":"La Grange","avgRating":3.7558,"timesOpened":12},{"song":"Sweet Adeline","avgRating":3.7528,"timesOpened":29},{"song":"Fire","avgRating":3.7385,"timesOpened":20},{"song":"Possum","avgRating":3.6952,"timesOpened":93},{"song":"Funky Bitch","avgRating":3.683,"timesOpened":10},{"song":"You Enjoy Myself","avgRating":3.6525,"timesOpened":52},{"song":"Weekapaug Groove","avgRating":3.6412,"timesOpened":65},{"song":"Rocky Top","avgRating":3.5725,"timesOpened":16},{"song":"Good Times Bad Times","avgRating":3.4827,"timesOpened":52},{"song":"Llama","avgRating":3.4558,"timesOpened":24}],
+    set2Opener: [{"song":"Peaches en Regalia","avgRating":4.177,"timesOpened":10},{"song":"Crosseyed and Painless","avgRating":4.1609,"timesOpened":23},{"song":"Julius","avgRating":4.1379,"timesOpened":14},{"song":"Also Sprach Zarathustra","avgRating":4.1283,"timesOpened":77},{"song":"Bathtub Gin","avgRating":4.1091,"timesOpened":11},{"song":"Halley's Comet","avgRating":4.0932,"timesOpened":22},{"song":"Blaze On","avgRating":4.0882,"timesOpened":11},{"song":"Ghost","avgRating":4.0871,"timesOpened":21},{"song":"Suzy Greenberg","avgRating":4.0869,"timesOpened":36},{"song":"Drowned","avgRating":4.0845,"timesOpened":22},{"song":"Sigma Oasis","avgRating":4.0727,"timesOpened":11},{"song":"Sand","avgRating":4.065,"timesOpened":24},{"song":"Wolfman's Brother","avgRating":4.0487,"timesOpened":15},{"song":"Maze","avgRating":4.0479,"timesOpened":14},{"song":"Set Your Soul Free","avgRating":4.0381,"timesOpened":16},{"song":"Carini","avgRating":4.0362,"timesOpened":34},{"song":"Runaway Jim","avgRating":4.0283,"timesOpened":40},{"song":"Tweezer","avgRating":4.0164,"timesOpened":36},{"song":"Free","avgRating":4.0109,"timesOpened":11},{"song":"AC/DC Bag","avgRating":4.002,"timesOpened":25},{"song":"Down with Disease","avgRating":3.9904,"timesOpened":99},{"song":"Everything's Right","avgRating":3.9838,"timesOpened":13},{"song":"Punch You in the Eye","avgRating":3.9805,"timesOpened":19},{"song":"Sample in a Jar","avgRating":3.9725,"timesOpened":16},{"song":"David Bowie","avgRating":3.9711,"timesOpened":27},{"song":"The Curtain","avgRating":3.9626,"timesOpened":27},{"song":"Rift","avgRating":3.9564,"timesOpened":14},{"song":"Chalk Dust Torture","avgRating":3.948,"timesOpened":65},{"song":"No Men In No Man's Land","avgRating":3.9336,"timesOpened":22},{"song":"Buried Alive","avgRating":3.9335,"timesOpened":23},{"song":"Split Open and Melt","avgRating":3.9292,"timesOpened":12},{"song":"Wilson","avgRating":3.9215,"timesOpened":46},{"song":"Tube","avgRating":3.9023,"timesOpened":13},{"song":"Rock and Roll","avgRating":3.8954,"timesOpened":28},{"song":"Birds of a Feather","avgRating":3.889,"timesOpened":21},{"song":"Axilla","avgRating":3.88,"timesOpened":19},{"song":"Mike's Song","avgRating":3.8775,"timesOpened":60},{"song":"Gotta Jibboo","avgRating":3.8676,"timesOpened":21},{"song":"Timber (Jerry the Mule)","avgRating":3.8574,"timesOpened":23},{"song":"Dinner and a Movie","avgRating":3.8494,"timesOpened":17},{"song":"Possum","avgRating":3.829,"timesOpened":29},{"song":"Golden Age","avgRating":3.8225,"timesOpened":16},{"song":"Twist","avgRating":3.7973,"timesOpened":15},{"song":"Backwards Down the Number Line","avgRating":3.7591,"timesOpened":11},{"song":"Llama","avgRating":3.7585,"timesOpened":27},{"song":"My Sweet One","avgRating":3.722,"timesOpened":10},{"song":"Reba","avgRating":3.702,"timesOpened":10},{"song":"The Landlady","avgRating":3.663,"timesOpened":20},{"song":"The Squirming Coil","avgRating":3.6364,"timesOpened":11},{"song":"Golgi Apparatus","avgRating":3.559,"timesOpened":30},{"song":"The Oh Kee Pa Ceremony","avgRating":3.53,"timesOpened":14},{"song":"Harry Hood","avgRating":3.237,"timesOpened":10}],
+    set2Closer: [{"song":"Walls of the Cave","avgRating":4.281,"timesOpened":10},{"song":"Split Open and Melt","avgRating":4.16,"timesOpened":16},{"song":"First Tube","avgRating":4.13,"timesOpened":23},{"song":"Frankenstein","avgRating":4.1038,"timesOpened":13},{"song":"Backwards Down the Number Line","avgRating":4.09,"timesOpened":15},{"song":"Amazing Grace","avgRating":4.0872,"timesOpened":18},{"song":"Down with Disease","avgRating":4.0258,"timesOpened":12},{"song":"Chalk Dust Torture","avgRating":4.0231,"timesOpened":42},{"song":"Ghost","avgRating":4.023,"timesOpened":10},{"song":"Slave to the Traffic Light","avgRating":4.0216,"timesOpened":98},{"song":"Fluffhead","avgRating":4.0014,"timesOpened":14},{"song":"Suzy Greenberg","avgRating":4.0011,"timesOpened":57},{"song":"Harry Hood","avgRating":3.9929,"timesOpened":90},{"song":"You Enjoy Myself","avgRating":3.9693,"timesOpened":98},{"song":"Cavern","avgRating":3.968,"timesOpened":88},{"song":"Julius","avgRating":3.9624,"timesOpened":17},{"song":"Sweet Adeline","avgRating":3.955,"timesOpened":16},{"song":"The Squirming Coil","avgRating":3.9518,"timesOpened":28},{"song":"Loving Cup","avgRating":3.9444,"timesOpened":27},{"song":"Tweezer Reprise","avgRating":3.9407,"timesOpened":85},{"song":"Fire","avgRating":3.9226,"timesOpened":19},{"song":"Run Like an Antelope","avgRating":3.9138,"timesOpened":98},{"song":"Character Zero","avgRating":3.9138,"timesOpened":64},{"song":"Hello My Baby","avgRating":3.892,"timesOpened":10},{"song":"Rocky Top","avgRating":3.8776,"timesOpened":17},{"song":"Golgi Apparatus","avgRating":3.8664,"timesOpened":69},{"song":"Llama","avgRating":3.8493,"timesOpened":15},{"song":"Harpua","avgRating":3.8482,"timesOpened":11},{"song":"Runaway Jim","avgRating":3.8467,"timesOpened":12},{"song":"Good Times Bad Times","avgRating":3.8314,"timesOpened":50},{"song":"Possum","avgRating":3.8302,"timesOpened":87},{"song":"David Bowie","avgRating":3.8118,"timesOpened":68},{"song":"Weekapaug Groove","avgRating":3.7879,"timesOpened":78},{"song":"Say It To Me S.A.N.T.O.S.","avgRating":3.7817,"timesOpened":12},{"song":"Highway to Hell","avgRating":3.7262,"timesOpened":26},{"song":"A Day in the Life","avgRating":3.7193,"timesOpened":15},{"song":"Big Black Furry Creature from Mars","avgRating":3.7115,"timesOpened":20},{"song":"Whipping Post","avgRating":3.518,"timesOpened":10}],
+    encore: [{"song":"Wilson","avgRating":4.3473,"timesOpened":15},{"song":"The Horse","avgRating":4.307,"timesOpened":10},{"song":"When the Circus Comes","avgRating":4.2554,"timesOpened":13},{"song":"Frankenstein","avgRating":4.1853,"timesOpened":15},{"song":"Wading in the Velvet Sea","avgRating":4.1424,"timesOpened":17},{"song":"While My Guitar Gently Weeps","avgRating":4.1408,"timesOpened":12},{"song":"The Lizards","avgRating":4.1373,"timesOpened":15},{"song":"A Life Beyond The Dream","avgRating":4.1186,"timesOpened":21},{"song":"Fee","avgRating":4.106,"timesOpened":25},{"song":"Amazing Grace","avgRating":4.0957,"timesOpened":35},{"song":"Grind","avgRating":4.0821,"timesOpened":14},{"song":"Sample in a Jar","avgRating":4.07,"timesOpened":11},{"song":"Bold As Love","avgRating":4.0673,"timesOpened":30},{"song":"Sleeping Monkey","avgRating":4.0592,"timesOpened":65},{"song":"Slave to the Traffic Light","avgRating":4.0406,"timesOpened":18},{"song":"Shine a Light","avgRating":4.0362,"timesOpened":13},{"song":"Bouncing Around the Room","avgRating":4.035,"timesOpened":30},{"song":"Harry Hood","avgRating":4.0324,"timesOpened":33},{"song":"First Tube","avgRating":4.0014,"timesOpened":14},{"song":"Julius","avgRating":3.9956,"timesOpened":27},{"song":"Loving Cup","avgRating":3.978,"timesOpened":55},{"song":"Cavern","avgRating":3.968,"timesOpened":20},{"song":"A Day in the Life","avgRating":3.9664,"timesOpened":25},{"song":"Bug","avgRating":3.9456,"timesOpened":18},{"song":"Quinn the Eskimo (The Mighty Quinn)","avgRating":3.941,"timesOpened":10},{"song":"Rock and Roll","avgRating":3.94,"timesOpened":15},{"song":"Possum","avgRating":3.939,"timesOpened":29},{"song":"Waste","avgRating":3.9209,"timesOpened":22},{"song":"The Squirming Coil","avgRating":3.9197,"timesOpened":30},{"song":"Rocky Top","avgRating":3.9072,"timesOpened":18},{"song":"Character Zero","avgRating":3.9015,"timesOpened":40},{"song":"Boogie On Reggae Woman","avgRating":3.8909,"timesOpened":11},{"song":"Funky Bitch","avgRating":3.8825,"timesOpened":16},{"song":"You Enjoy Myself","avgRating":3.8756,"timesOpened":16},{"song":"My Sweet One","avgRating":3.8718,"timesOpened":11},{"song":"Memories","avgRating":3.8561,"timesOpened":18},{"song":"Fire","avgRating":3.837,"timesOpened":30},{"song":"Good Times Bad Times","avgRating":3.8302,"timesOpened":46},{"song":"Golgi Apparatus","avgRating":3.8221,"timesOpened":28},{"song":"Highway to Hell","avgRating":3.8169,"timesOpened":13},{"song":"Suzy Greenberg","avgRating":3.8108,"timesOpened":24},{"song":"Show of Life","avgRating":3.8079,"timesOpened":19},{"song":"Contact","avgRating":3.8062,"timesOpened":65},{"song":"Chalk Dust Torture","avgRating":3.796,"timesOpened":10},{"song":"Sweet Adeline","avgRating":3.7641,"timesOpened":39},{"song":"Carolina","avgRating":3.76,"timesOpened":21},{"song":"Lawn Boy","avgRating":3.7165,"timesOpened":34},{"song":"Meatstick","avgRating":3.668,"timesOpened":10},{"song":"Hold Your Head Up","avgRating":3.624,"timesOpened":10}],
+  };
 
   const domainMax = 5;
-  const ticks = [0, 1, 2, 3, 4, 5];
+  const ratingTicks = [0, 1, 2, 3, 4, 5];
   const grid = document.getElementById('chartGrid');
   const gridlines = document.getElementById('gridlines');
   const axisTicks = document.getElementById('axisTicks');
@@ -380,9 +415,15 @@
   const tableBody = document.querySelector('#dataTable tbody');
   const legendGradient = document.getElementById('legendGradient');
   const legendTicks = document.getElementById('legendTicks');
+  const legendTitle = document.getElementById('legendTitle');
+  const subtitleEl = document.getElementById('subtitle');
+  const footerEl = document.getElementById('footerNote');
+  const tableCountHeader = document.getElementById('tableCountHeader');
+  const metricSelect = document.getElementById('metricSelect');
 
-  // Sequential "volume" ramp (times opened): one hue, light -> dark, from the
-  // skill's documented palette (palette.md, blue sequential steps 100-700).
+  // Sequential "volume" ramp (times in position): one hue, light -> dark,
+  // from the skill's documented palette (palette.md, blue sequential steps
+  // 100-700).
   const VOLUME_RAMP = [
     '#cde2fb', '#b7d3f6', '#9ec5f4', '#86b6ef', '#6da7ec', '#5598e7',
     '#3987e5', '#2a78d6', '#256abf', '#1c5cab', '#184f95', '#104281', '#0d366b',
@@ -427,27 +468,8 @@
       ? 'rgb(255,255,255)'
       : 'rgb(11,11,11)';
 
-  const volumeValues = data.map((d) => d.timesOpened);
-  const volumeMin = Math.min(...volumeValues);
-  const volumeMax = Math.max(...volumeValues);
-  // Square-root scale: volume is heavily right-skewed (a few huge outliers
-  // like Chalk Dust Torture at 99 vs. a cluster of songs at 10-20), so a
-  // linear scale would make most bars nearly indistinguishable in color.
-  const volumeToT = (value) =>
-    (Math.sqrt(value) - Math.sqrt(volumeMin)) / (Math.sqrt(volumeMax) - Math.sqrt(volumeMin));
-
-  legendGradient.style.background =
-    'linear-gradient(to right, ' + VOLUME_RAMP.join(', ') + ')';
-  const legendMidValue =
-    Math.round((((Math.sqrt(volumeMin) + Math.sqrt(volumeMax)) / 2) ** 2) / 5) * 5;
-  for (const v of [volumeMin, legendMidValue, volumeMax]) {
-    const span = document.createElement('span');
-    span.style.left = (volumeToT(v) * 100) + '%';
-    span.textContent = v;
-    legendTicks.appendChild(span);
-  }
-
-  for (const t of ticks) {
+  // Rating axis (0-5) and its gridlines never change between metrics.
+  for (const t of ratingTicks) {
     const pct = (t / domainMax) * 100;
     const line = document.createElement('div');
     line.className = 'line' + (t === 0 ? ' baseline' : '');
@@ -460,77 +482,159 @@
     axisTicks.appendChild(span);
   }
 
-  gridlines.style.gridRow = '1 / ' + (data.length + 1);
+  for (const key of Object.keys(METRICS)) {
+    const option = document.createElement('option');
+    option.value = key;
+    option.textContent = METRICS[key].label;
+    metricSelect.appendChild(option);
+  }
 
-  data.forEach((d, index) => {
-    const rowLine = index + 1;
+  function clearRows() {
+    for (const el of [...grid.children]) {
+      if (el.id !== 'gridlines') el.remove();
+    }
+    while (legendTicks.firstChild) legendTicks.removeChild(legendTicks.firstChild);
+    while (tableBody.firstChild) tableBody.removeChild(tableBody.firstChild);
+  }
 
-    const label = document.createElement('div');
-    label.className = 'row-label';
-    label.textContent = d.song;
-    label.style.gridRow = String(rowLine);
-    grid.appendChild(label);
+  function renderChart(metricKey) {
+    const metric = METRICS[metricKey];
+    const data = DATASETS[metricKey];
+    clearRows();
 
-    const track = document.createElement('div');
-    track.className = 'row-track';
-    track.style.gridRow = String(rowLine);
-    track.tabIndex = 0;
-    track.setAttribute('role', 'img');
-    track.setAttribute(
+    subtitleEl.textContent =
+      'Songs that have ' + metric.volumeLabel + ' in at least 10 Phish shows, ' +
+      'ranked by the average rating of those shows. Bar color shows how often ' +
+      'each song has ' + metric.volumeLabel +
+      ' \u2014 the number inside each bar is the exact count.';
+    footerEl.textContent =
+      'Source: Phish.net setlist and show-rating data. Bar length shows the ' +
+      'average user rating (0\u20135 scale) of shows where this song was the ' +
+      metric.position + '; bar color shows volume (lighter = fewer, darker = ' +
+      'more \u2014 see legend above). Shows flagged as non-standard (exclude) are ' +
+      'omitted. Limited to songs appearing in this position 10 or more times.';
+    legendTitle.textContent = 'Times ' + metric.volumeLabel;
+    tableCountHeader.textContent = 'Times ' + metric.volumeLabel;
+    grid.setAttribute(
       'aria-label',
-      d.song + ': average rating ' + d.avgRating.toFixed(2) +
-        ' over ' + d.timesOpened + ' opens',
+      'Bar chart of average show rating for songs that were the ' + metric.label +
+        ', colored by how often',
     );
 
-    const fillColor = colorForT(volumeToT(d.timesOpened));
-    const bar = document.createElement('div');
-    bar.className = 'bar';
-    bar.style.width = (d.avgRating / domainMax * 100) + '%';
-    bar.style.background = fillColor;
-    const inlineLabel = document.createElement('span');
-    inlineLabel.className = 'bar-inline-label';
-    inlineLabel.style.color = pickInk(hexToRgb(fillColor));
-    inlineLabel.textContent = d.timesOpened + ' shows';
-    bar.appendChild(inlineLabel);
-    track.appendChild(bar);
-    grid.appendChild(track);
+    const volumeValues = data.map((d) => d.timesOpened);
+    const volumeMin = Math.min(...volumeValues);
+    const volumeMax = Math.max(...volumeValues);
+    // Square-root scale: volume is heavily right-skewed (a few huge outliers
+    // vs. a cluster of songs near the 10-open threshold), so a linear scale
+    // would make most bars nearly indistinguishable in color.
+    const volumeToT = (value) =>
+      volumeMax === volumeMin
+        ? 1
+        : (Math.sqrt(value) - Math.sqrt(volumeMin)) / (Math.sqrt(volumeMax) - Math.sqrt(volumeMin));
 
-    const value = document.createElement('div');
-    value.className = 'row-value';
-    value.style.gridRow = String(rowLine);
-    value.textContent = d.avgRating.toFixed(2);
-    grid.appendChild(value);
+    legendGradient.style.background =
+      'linear-gradient(to right, ' + VOLUME_RAMP.join(', ') + ')';
+    const legendMidValue =
+      Math.round((((Math.sqrt(volumeMin) + Math.sqrt(volumeMax)) / 2) ** 2) / 5) * 5;
+    const legendValues = legendMidValue > volumeMin && legendMidValue < volumeMax
+      ? [volumeMin, legendMidValue, volumeMax]
+      : [volumeMin, volumeMax];
+    for (const v of legendValues) {
+      const span = document.createElement('span');
+      span.style.left = (volumeToT(v) * 100) + '%';
+      span.textContent = v;
+      legendTicks.appendChild(span);
+    }
 
-    const showTip = (evt) => {
-      const valueEl = tooltip.querySelector('.tt-value');
-      const labelEl = tooltip.querySelector('.tt-label');
-      valueEl.textContent = d.avgRating.toFixed(2) + ' avg';
-      labelEl.textContent = d.song + ' · ' + d.timesOpened + ' opens';
-      const rect = track.getBoundingClientRect();
-      const x = evt && evt.clientX ? evt.clientX : rect.left + bar.offsetWidth;
-      tooltip.style.left = x + 'px';
-      tooltip.style.top = rect.top + 'px';
-      tooltip.classList.add('visible');
-    };
-    const hideTip = () => tooltip.classList.remove('visible');
+    gridlines.style.gridRow = '1 / ' + (data.length + 1);
 
-    track.addEventListener('mousemove', showTip);
-    track.addEventListener('mouseenter', showTip);
-    track.addEventListener('mouseleave', hideTip);
-    track.addEventListener('focus', showTip);
-    track.addEventListener('blur', hideTip);
+    data.forEach((d, index) => {
+      const rowLine = index + 1;
 
-    const tr = document.createElement('tr');
-    const tdSong = document.createElement('td');
-    tdSong.textContent = d.song;
-    const tdRating = document.createElement('td');
-    tdRating.textContent = d.avgRating.toFixed(2);
-    const tdCount = document.createElement('td');
-    tdCount.textContent = d.timesOpened;
-    tr.appendChild(tdSong);
-    tr.appendChild(tdRating);
-    tr.appendChild(tdCount);
-    tableBody.appendChild(tr);
+      const label = document.createElement('div');
+      label.className = 'row-label';
+      label.textContent = d.song;
+      label.style.gridRow = String(rowLine);
+      grid.appendChild(label);
+
+      const track = document.createElement('div');
+      track.className = 'row-track';
+      track.style.gridRow = String(rowLine);
+      track.tabIndex = 0;
+      track.setAttribute('role', 'img');
+      track.setAttribute(
+        'aria-label',
+        d.song + ': average rating ' + d.avgRating.toFixed(2) +
+          ' over ' + d.timesOpened + ' shows',
+      );
+
+      const fillColor = colorForT(volumeToT(d.timesOpened));
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      bar.style.width = (d.avgRating / domainMax * 100) + '%';
+      bar.style.background = fillColor;
+      const inlineLabel = document.createElement('span');
+      inlineLabel.className = 'bar-inline-label';
+      inlineLabel.style.color = pickInk(hexToRgb(fillColor));
+      inlineLabel.textContent = d.timesOpened + ' shows';
+      bar.appendChild(inlineLabel);
+      track.appendChild(bar);
+      grid.appendChild(track);
+
+      const value = document.createElement('div');
+      value.className = 'row-value';
+      value.style.gridRow = String(rowLine);
+      value.textContent = d.avgRating.toFixed(2);
+      grid.appendChild(value);
+
+      const showTip = (evt) => {
+        const valueEl = tooltip.querySelector('.tt-value');
+        const labelEl = tooltip.querySelector('.tt-label');
+        valueEl.textContent = d.avgRating.toFixed(2) + ' avg';
+        labelEl.textContent = d.song + ' \u00b7 ' + d.timesOpened + ' shows';
+        const rect = track.getBoundingClientRect();
+        const x = evt && evt.clientX ? evt.clientX : rect.left + bar.offsetWidth;
+        tooltip.style.left = x + 'px';
+        tooltip.style.top = rect.top + 'px';
+        tooltip.classList.add('visible');
+      };
+      const hideTip = () => tooltip.classList.remove('visible');
+
+      track.addEventListener('mousemove', showTip);
+      track.addEventListener('mouseenter', showTip);
+      track.addEventListener('mouseleave', hideTip);
+      track.addEventListener('focus', showTip);
+      track.addEventListener('blur', hideTip);
+
+      const tr = document.createElement('tr');
+      const tdSong = document.createElement('td');
+      tdSong.textContent = d.song;
+      const tdRating = document.createElement('td');
+      tdRating.textContent = d.avgRating.toFixed(2);
+      const tdCount = document.createElement('td');
+      tdCount.textContent = d.timesOpened;
+      tr.appendChild(tdSong);
+      tr.appendChild(tdRating);
+      tr.appendChild(tdCount);
+      tableBody.appendChild(tr);
+    });
+  }
+
+  function metricFromUrl() {
+    const requested = new URLSearchParams(window.location.search).get('metric');
+    return requested && METRICS[requested] ? requested : 'set1Opener';
+  }
+
+  const initialMetric = metricFromUrl();
+  metricSelect.value = initialMetric;
+  renderChart(initialMetric);
+
+  metricSelect.addEventListener('change', () => {
+    const key = metricSelect.value;
+    renderChart(key);
+    const url = new URL(window.location.href);
+    url.searchParams.set('metric', key);
+    window.history.replaceState(null, '', url);
   });
 
   const themeToggle = document.getElementById('themeToggle');
