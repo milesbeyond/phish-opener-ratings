@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Phish Show Openers — Times Appeared First</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+  }
+  .viz-root {
+    --page-plane:      #f9f9f7;
+    --surface-1:       #fcfcfb;
+    --text-primary:    #0b0b0b;
+    --text-secondary:  #52514e;
+    --text-muted:      #898781;
+    --gridline:        #e1e0d9;
+    --baseline:        #c3c2b7;
+    --series-1:        #2a78d6;
+    --series-1-hover:  #1c5cab;
+    --border:          rgba(11, 11, 11, 0.10);
+    --tooltip-bg:      #0b0b0b;
+    --tooltip-text:    #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --page-plane:      #0d0d0d;
+      --surface-1:       #1a1a19;
+      --text-primary:    #ffffff;
+      --text-secondary:  #c3c2b7;
+      --text-muted:      #898781;
+      --gridline:        #2c2c2a;
+      --baseline:        #383835;
+      --series-1:        #3987e5;
+      --series-1-hover:  #5598e7;
+      --border:          rgba(255, 255, 255, 0.10);
+      --tooltip-bg:      #ffffff;
+      --tooltip-text:    #0b0b0b;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --page-plane:      #0d0d0d;
+    --surface-1:       #1a1a19;
+    --text-primary:    #ffffff;
+    --text-secondary:  #c3c2b7;
+    --text-muted:      #898781;
+    --gridline:        #2c2c2a;
+    --baseline:        #383835;
+    --series-1:        #3987e5;
+    --series-1-hover:  #5598e7;
+    --border:          rgba(255, 255, 255, 0.10);
+    --tooltip-bg:      #ffffff;
+    --tooltip-text:    #0b0b0b;
+  }
+
+  .viz-root {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 32px 24px 56px;
+  }
+  .viz-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 28px 20px;
+  }
+  .viz-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 4px;
+  }
+  h1 {
+    font-size: 17px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    color: var(--text-primary);
+  }
+  .subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0 0 20px;
+    line-height: 1.5;
+  }
+  .theme-toggle {
+    flex: 0 0 auto;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  .theme-toggle:hover { color: var(--text-primary); }
+
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr 44px;
+    column-gap: 10px;
+    row-gap: 3px;
+  }
+  .row-label {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    text-align: right;
+    font-size: 12.5px;
+    color: var(--text-primary);
+    line-height: 1.25;
+    padding: 2px 0;
+  }
+  .row-track {
+    grid-column: 2;
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 20px;
+  }
+  .bar {
+    height: 20px;
+    background: var(--series-1);
+    border-radius: 0 4px 4px 0;
+    transition: background-color 120ms ease, filter 120ms ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    overflow: hidden;
+  }
+  .bar .bar-inline-label {
+    color: #ffffff;
+    font-size: 10.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    padding-right: 8px;
+    white-space: nowrap;
+  }
+  .row-track:hover .bar,
+  .row-track:focus-visible .bar {
+    background: var(--series-1-hover);
+  }
+  .row-track:focus-visible {
+    outline: 2px solid var(--series-1-hover);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  .row-value {
+    grid-column: 3;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+    padding: 2px 0;
+  }
+
+  .gridlines {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    position: relative;
+    pointer-events: none;
+  }
+  .gridlines .line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--gridline);
+  }
+  .gridlines .line.baseline { background: var(--baseline); }
+
+  .axis-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 240px 1fr 44px;
+    column-gap: 10px;
+    margin-top: 6px;
+  }
+  .axis-ticks {
+    grid-column: 2;
+    position: relative;
+    height: 18px;
+  }
+  .axis-ticks span {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .axis-ticks span:first-child { transform: translateX(0); }
+  .axis-ticks span:last-child { transform: translateX(-100%); }
+  .axis-title {
+    grid-column: 2;
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .tooltip {
+    position: fixed;
+    pointer-events: none;
+    background: var(--tooltip-bg);
+    color: var(--tooltip-text);
+    font-size: 12px;
+    border-radius: 6px;
+    padding: 6px 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    transform: translate(-50%, calc(-100% - 10px));
+    transition: opacity 100ms ease;
+    z-index: 10;
+    white-space: nowrap;
+  }
+  .tooltip.visible { opacity: 1; }
+  .tooltip .tt-value {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .tooltip .tt-label {
+    opacity: 0.8;
+    margin-left: 6px;
+  }
+
+  details.table-toggle {
+    margin-top: 22px;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+  summary {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+  }
+  summary:hover { color: var(--text-primary); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 12.5px;
+  }
+  table caption { text-align: left; font-size: 11.5px; color: var(--text-muted); margin-bottom: 8px; }
+  th, td {
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--gridline);
+  }
+  th:not(:first-child), td:not(:first-child) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  th { color: var(--text-secondary); font-weight: 600; }
+  td { color: var(--text-primary); }
+
+  footer.note {
+    margin-top: 16px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div class="viz-root">
+  <div class="viz-card">
+    <div class="viz-head">
+      <div>
+        <h1>Phish show openers — average show rating</h1>
+        <p class="subtitle">
+          Songs that have opened at least 10 Phish shows, ranked by the average
+          rating of those shows. The number inside each bar is how many times
+          that song has opened.
+        </p>
+      </div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode">Dark mode</button>
+    </div>
+
+    <div class="chart-grid" id="chartGrid" role="img" aria-label="Bar chart of average show rating by opener song">
+      <div class="gridlines" id="gridlines"></div>
+      <!-- rows injected by JS -->
+    </div>
+
+    <div class="axis-row">
+      <div></div>
+      <div class="axis-ticks" id="axisTicks"></div>
+      <div></div>
+    </div>
+    <div class="axis-row">
+      <div></div>
+      <div class="axis-title">Average show rating (0–5)</div>
+      <div></div>
+    </div>
+
+    <details class="table-toggle">
+      <summary>View as data table</summary>
+      <table id="dataTable">
+        <caption>Same data as the chart above, in ranked order.</caption>
+        <thead>
+          <tr><th>Song</th><th>Average rating</th><th>Times opened</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </details>
+
+    <footer class="note">
+      Source: Phish.net setlist and show-rating data. Bars show the average
+      user rating (0–5 scale) of shows each song opened. Opener = first song
+      of set one; shows flagged as non-standard (exclude) are omitted. Limited
+      to songs with 10 or more opens.
+    </footer>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip" role="status" aria-live="polite">
+  <span class="tt-value"></span><span class="tt-label"></span>
+</div>
+
+<script>
+  const data = [{"song":"Tweezer","avgRating":4.278,"timesOpened":10},{"song":"My Soul","avgRating":4.2673,"timesOpened":11},{"song":"Ghost","avgRating":4.2145,"timesOpened":11},{"song":"Punch You in the Eye","avgRating":4.1722,"timesOpened":32},{"song":"Free","avgRating":4.1605,"timesOpened":21},{"song":"Ya Mar","avgRating":4.0917,"timesOpened":18},{"song":"My Friend, My Friend","avgRating":4.0907,"timesOpened":29},{"song":"Fluffhead","avgRating":4.0638,"timesOpened":13},{"song":"Axilla","avgRating":4.0408,"timesOpened":12},{"song":"NICU","avgRating":4.026,"timesOpened":10},{"song":"Theme from the Bottom","avgRating":4.02,"timesOpened":10},{"song":"Carini","avgRating":4.013,"timesOpened":20},{"song":"The Moma Dance","avgRating":4.0115,"timesOpened":27},{"song":"Rift","avgRating":3.9961,"timesOpened":18},{"song":"46 Days","avgRating":3.9957,"timesOpened":14},{"song":"Bathtub Gin","avgRating":3.9936,"timesOpened":14},{"song":"Maze","avgRating":3.9909,"timesOpened":11},{"song":"Tube","avgRating":3.9869,"timesOpened":13},{"song":"Buried Alive","avgRating":3.9687,"timesOpened":83},{"song":"Wilson","avgRating":3.9649,"timesOpened":47},{"song":"Wolfman's Brother","avgRating":3.9643,"timesOpened":14},{"song":"Llama","avgRating":3.9484,"timesOpened":62},{"song":"First Tube","avgRating":3.925,"timesOpened":24},{"song":"Sample in a Jar","avgRating":3.9053,"timesOpened":38},{"song":"Julius","avgRating":3.9024,"timesOpened":17},{"song":"Fee","avgRating":3.9,"timesOpened":11},{"song":"Party Time","avgRating":3.879,"timesOpened":10},{"song":"Chalk Dust Torture","avgRating":3.8468,"timesOpened":99},{"song":"Divided Sky","avgRating":3.8437,"timesOpened":19},{"song":"Stealing Time From the Faulty Plan","avgRating":3.84,"timesOpened":10},{"song":"Runaway Jim","avgRating":3.83,"timesOpened":95},{"song":"Cars Trucks Buses","avgRating":3.8235,"timesOpened":20},{"song":"AC/DC Bag","avgRating":3.809,"timesOpened":67},{"song":"Crowd Control","avgRating":3.8041,"timesOpened":17},{"song":"Mike's Song","avgRating":3.7883,"timesOpened":30},{"song":"Kill Devil Falls","avgRating":3.77,"timesOpened":19},{"song":"Funky Bitch","avgRating":3.76,"timesOpened":23},{"song":"Down with Disease","avgRating":3.7524,"timesOpened":21},{"song":"The Landlady","avgRating":3.7273,"timesOpened":49},{"song":"Poor Heart","avgRating":3.6854,"timesOpened":13},{"song":"Carolina","avgRating":3.6842,"timesOpened":12},{"song":"Suzy Greenberg","avgRating":3.6734,"timesOpened":41},{"song":"Cavern","avgRating":3.6517,"timesOpened":12},{"song":"The Curtain","avgRating":3.6294,"timesOpened":18},{"song":"The Oh Kee Pa Ceremony","avgRating":3.6294,"timesOpened":18},{"song":"Possum","avgRating":3.6,"timesOpened":32},{"song":"Dinner and a Movie","avgRating":3.5888,"timesOpened":17},{"song":"David Bowie","avgRating":3.5823,"timesOpened":13},{"song":"Golgi Apparatus","avgRating":3.5707,"timesOpened":59},{"song":"Alumni Blues","avgRating":3.53,"timesOpened":13},{"song":"The Sloth","avgRating":3.4682,"timesOpened":11},{"song":"I Didn't Know","avgRating":3.4553,"timesOpened":15},{"song":"Reba","avgRating":3.2808,"timesOpened":12},{"song":"You Enjoy Myself","avgRating":3.1715,"timesOpened":13}];
+
+  const domainMax = 5;
+  const ticks = [0, 1, 2, 3, 4, 5];
+  const grid = document.getElementById('chartGrid');
+  const gridlines = document.getElementById('gridlines');
+  const axisTicks = document.getElementById('axisTicks');
+  const tooltip = document.getElementById('tooltip');
+  const tableBody = document.querySelector('#dataTable tbody');
+
+  for (const t of ticks) {
+    const pct = (t / domainMax) * 100;
+    const line = document.createElement('div');
+    line.className = 'line' + (t === 0 ? ' baseline' : '');
+    line.style.left = pct + '%';
+    gridlines.appendChild(line);
+
+    const span = document.createElement('span');
+    span.style.left = pct + '%';
+    span.textContent = t;
+    axisTicks.appendChild(span);
+  }
+
+  gridlines.style.gridRow = '1 / ' + (data.length + 1);
+
+  data.forEach((d, index) => {
+    const rowLine = index + 1;
+
+    const label = document.createElement('div');
+    label.className = 'row-label';
+    label.textContent = d.song;
+    label.style.gridRow = String(rowLine);
+    grid.appendChild(label);
+
+    const track = document.createElement('div');
+    track.className = 'row-track';
+    track.style.gridRow = String(rowLine);
+    track.tabIndex = 0;
+    track.setAttribute('role', 'img');
+    track.setAttribute(
+      'aria-label',
+      d.song + ': average rating ' + d.avgRating.toFixed(2) +
+        ' over ' + d.timesOpened + ' opens',
+    );
+
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.style.width = (d.avgRating / domainMax * 100) + '%';
+    const inlineLabel = document.createElement('span');
+    inlineLabel.className = 'bar-inline-label';
+    inlineLabel.textContent = d.timesOpened + ' shows';
+    bar.appendChild(inlineLabel);
+    track.appendChild(bar);
+    grid.appendChild(track);
+
+    const value = document.createElement('div');
+    value.className = 'row-value';
+    value.style.gridRow = String(rowLine);
+    value.textContent = d.avgRating.toFixed(2);
+    grid.appendChild(value);
+
+    const showTip = (evt) => {
+      const valueEl = tooltip.querySelector('.tt-value');
+      const labelEl = tooltip.querySelector('.tt-label');
+      valueEl.textContent = d.avgRating.toFixed(2) + ' avg';
+      labelEl.textContent = d.song + ' · ' + d.timesOpened + ' opens';
+      const rect = track.getBoundingClientRect();
+      const x = evt && evt.clientX ? evt.clientX : rect.left + bar.offsetWidth;
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = rect.top + 'px';
+      tooltip.classList.add('visible');
+    };
+    const hideTip = () => tooltip.classList.remove('visible');
+
+    track.addEventListener('mousemove', showTip);
+    track.addEventListener('mouseenter', showTip);
+    track.addEventListener('mouseleave', hideTip);
+    track.addEventListener('focus', showTip);
+    track.addEventListener('blur', hideTip);
+
+    const tr = document.createElement('tr');
+    const tdSong = document.createElement('td');
+    tdSong.textContent = d.song;
+    const tdRating = document.createElement('td');
+    tdRating.textContent = d.avgRating.toFixed(2);
+    const tdCount = document.createElement('td');
+    tdCount.textContent = d.timesOpened;
+    tr.appendChild(tdSong);
+    tr.appendChild(tdRating);
+    tr.appendChild(tdCount);
+    tableBody.appendChild(tr);
+  });
+
+  const themeToggle = document.getElementById('themeToggle');
+  themeToggle.addEventListener('click', () => {
+    const root = document.documentElement;
+    const current = root.getAttribute('data-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = current ? current === 'dark' : prefersDark;
+    const next = isDark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    themeToggle.textContent = next === 'dark' ? 'Light mode' : 'Dark mode';
+  });
+</script>
+</body>
+</html>
