@@ -24,6 +24,7 @@
     --border:          rgba(11, 11, 11, 0.10);
     --tooltip-bg:      #0b0b0b;
     --tooltip-text:    #ffffff;
+    --series-1:        #2a78d6;
   }
   @media (prefers-color-scheme: dark) {
     :root:where(:not([data-theme="light"])) .viz-root {
@@ -38,6 +39,7 @@
       --border:          rgba(255, 255, 255, 0.10);
       --tooltip-bg:      #ffffff;
       --tooltip-text:    #0b0b0b;
+      --series-1:        #3987e5;
     }
   }
   :root[data-theme="dark"] .viz-root {
@@ -52,6 +54,7 @@
     --border:          rgba(255, 255, 255, 0.10);
     --tooltip-bg:      #ffffff;
     --tooltip-text:    #0b0b0b;
+    --series-1:        #3987e5;
   }
 
   .viz-root {
@@ -95,6 +98,15 @@
     cursor: pointer;
   }
   .theme-toggle:hover { color: var(--text-primary); }
+  .head-actions {
+    display: flex;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+  .theme-toggle[aria-pressed="true"] {
+    color: var(--text-primary);
+    border-color: var(--text-primary);
+  }
 
   .controls-row {
     display: flex;
@@ -338,13 +350,16 @@
         <h1>Phish song position vs. average show rating</h1>
         <p class="subtitle" id="subtitle"></p>
       </div>
-      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode">Dark mode</button>
+      <div class="head-actions">
+        <button class="theme-toggle" id="mathModeToggle" type="button" aria-pressed="false">Math mode</button>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode">Dark mode</button>
+      </div>
     </div>
 
     <div class="controls-row">
       <label for="metricSelect">Compare</label>
       <select class="metric-select" id="metricSelect"></select>
-      <span class="vs">vs. average show rating</span>
+      <span class="vs" id="vsLabel">vs. average show rating</span>
     </div>
 
     <div class="legend" id="legend">
@@ -367,7 +382,7 @@
     </div>
     <div class="axis-row">
       <div></div>
-      <div class="axis-title">Average show rating (0–5)</div>
+      <div class="axis-title" id="axisTitle">Average show rating (0–5)</div>
       <div></div>
     </div>
 
@@ -376,7 +391,7 @@
       <table id="dataTable">
         <caption>Same data as the chart above, in ranked order.</caption>
         <thead>
-          <tr><th>Song</th><th>Average rating</th><th id="tableCountHeader">Times</th></tr>
+          <tr><th>Song</th><th>Average rating</th><th id="tableCountHeader">Times</th><th>Score (rating × times)</th></tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -406,13 +421,13 @@
     encore: [{"song":"Wilson","avgRating":4.3473,"timesOpened":15},{"song":"The Horse","avgRating":4.307,"timesOpened":10},{"song":"When the Circus Comes","avgRating":4.2554,"timesOpened":13},{"song":"Frankenstein","avgRating":4.1853,"timesOpened":15},{"song":"Wading in the Velvet Sea","avgRating":4.1424,"timesOpened":17},{"song":"While My Guitar Gently Weeps","avgRating":4.1408,"timesOpened":12},{"song":"The Lizards","avgRating":4.1373,"timesOpened":15},{"song":"A Life Beyond The Dream","avgRating":4.1186,"timesOpened":21},{"song":"Fee","avgRating":4.106,"timesOpened":25},{"song":"Amazing Grace","avgRating":4.0957,"timesOpened":35},{"song":"Grind","avgRating":4.0821,"timesOpened":14},{"song":"Sample in a Jar","avgRating":4.07,"timesOpened":11},{"song":"Bold As Love","avgRating":4.0673,"timesOpened":30},{"song":"Sleeping Monkey","avgRating":4.0592,"timesOpened":65},{"song":"Slave to the Traffic Light","avgRating":4.0406,"timesOpened":18},{"song":"Shine a Light","avgRating":4.0362,"timesOpened":13},{"song":"Bouncing Around the Room","avgRating":4.035,"timesOpened":30},{"song":"Harry Hood","avgRating":4.0324,"timesOpened":33},{"song":"First Tube","avgRating":4.0014,"timesOpened":14},{"song":"Julius","avgRating":3.9956,"timesOpened":27},{"song":"Loving Cup","avgRating":3.978,"timesOpened":55},{"song":"Cavern","avgRating":3.968,"timesOpened":20},{"song":"A Day in the Life","avgRating":3.9664,"timesOpened":25},{"song":"Bug","avgRating":3.9456,"timesOpened":18},{"song":"Quinn the Eskimo (The Mighty Quinn)","avgRating":3.941,"timesOpened":10},{"song":"Rock and Roll","avgRating":3.94,"timesOpened":15},{"song":"Possum","avgRating":3.939,"timesOpened":29},{"song":"Waste","avgRating":3.9209,"timesOpened":22},{"song":"The Squirming Coil","avgRating":3.9197,"timesOpened":30},{"song":"Rocky Top","avgRating":3.9072,"timesOpened":18},{"song":"Character Zero","avgRating":3.9015,"timesOpened":40},{"song":"Boogie On Reggae Woman","avgRating":3.8909,"timesOpened":11},{"song":"Funky Bitch","avgRating":3.8825,"timesOpened":16},{"song":"You Enjoy Myself","avgRating":3.8756,"timesOpened":16},{"song":"My Sweet One","avgRating":3.8718,"timesOpened":11},{"song":"Memories","avgRating":3.8561,"timesOpened":18},{"song":"Fire","avgRating":3.837,"timesOpened":30},{"song":"Good Times Bad Times","avgRating":3.8302,"timesOpened":46},{"song":"Golgi Apparatus","avgRating":3.8221,"timesOpened":28},{"song":"Highway to Hell","avgRating":3.8169,"timesOpened":13},{"song":"Suzy Greenberg","avgRating":3.8108,"timesOpened":24},{"song":"Show of Life","avgRating":3.8079,"timesOpened":19},{"song":"Contact","avgRating":3.8062,"timesOpened":65},{"song":"Chalk Dust Torture","avgRating":3.796,"timesOpened":10},{"song":"Sweet Adeline","avgRating":3.7641,"timesOpened":39},{"song":"Carolina","avgRating":3.76,"timesOpened":21},{"song":"Lawn Boy","avgRating":3.7165,"timesOpened":34},{"song":"Meatstick","avgRating":3.668,"timesOpened":10},{"song":"Hold Your Head Up","avgRating":3.624,"timesOpened":10}],
   };
 
-  const domainMax = 5;
-  const ratingTicks = [0, 1, 2, 3, 4, 5];
   const grid = document.getElementById('chartGrid');
   const gridlines = document.getElementById('gridlines');
   const axisTicks = document.getElementById('axisTicks');
+  const axisTitleEl = document.getElementById('axisTitle');
   const tooltip = document.getElementById('tooltip');
   const tableBody = document.querySelector('#dataTable tbody');
+  const legend = document.getElementById('legend');
   const legendGradient = document.getElementById('legendGradient');
   const legendTicks = document.getElementById('legendTicks');
   const legendTitle = document.getElementById('legendTitle');
@@ -420,6 +435,25 @@
   const footerEl = document.getElementById('footerNote');
   const tableCountHeader = document.getElementById('tableCountHeader');
   const metricSelect = document.getElementById('metricSelect');
+  const vsLabel = document.getElementById('vsLabel');
+  const mathModeToggle = document.getElementById('mathModeToggle');
+
+  // Rounds a positive max up to a "nice" step so an axis gets clean ticks
+  // (e.g. 757.8 -> step 200, ticks 0/200/400/600/800) across widely varying
+  // score domains between metrics.
+  function niceCeilStep(max, targetTicks) {
+    const rawStep = max / targetTicks;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const candidates = [1, 2, 2.5, 5, 10];
+    let step = magnitude * 10;
+    for (const c of candidates) {
+      if (rawStep <= c * magnitude) { step = c * magnitude; break; }
+    }
+    const ceilMax = Math.ceil(max / step) * step;
+    const ticks = [];
+    for (let v = 0; v <= ceilMax + step / 2; v += step) ticks.push(Math.round(v * 100) / 100);
+    return { domainMax: ceilMax, ticks };
+  }
 
   // Sequential "volume" ramp (times in position): one hue, light -> dark,
   // from the skill's documented palette (palette.md, blue sequential steps
@@ -468,20 +502,6 @@
       ? 'rgb(255,255,255)'
       : 'rgb(11,11,11)';
 
-  // Rating axis (0-5) and its gridlines never change between metrics.
-  for (const t of ratingTicks) {
-    const pct = (t / domainMax) * 100;
-    const line = document.createElement('div');
-    line.className = 'line' + (t === 0 ? ' baseline' : '');
-    line.style.left = pct + '%';
-    gridlines.appendChild(line);
-
-    const span = document.createElement('span');
-    span.style.left = pct + '%';
-    span.textContent = t;
-    axisTicks.appendChild(span);
-  }
-
   for (const key of Object.keys(METRICS)) {
     const option = document.createElement('option');
     option.value = key;
@@ -494,32 +514,82 @@
       if (el.id !== 'gridlines') el.remove();
     }
     while (legendTicks.firstChild) legendTicks.removeChild(legendTicks.firstChild);
+    while (axisTicks.firstChild) axisTicks.removeChild(axisTicks.firstChild);
+    while (gridlines.firstChild) gridlines.removeChild(gridlines.firstChild);
     while (tableBody.firstChild) tableBody.removeChild(tableBody.firstChild);
   }
 
-  function renderChart(metricKey) {
+  function renderChart(metricKey, mathMode) {
     const metric = METRICS[metricKey];
-    const data = DATASETS[metricKey];
+    const source = DATASETS[metricKey];
+    const data = source.map((d) => ({ ...d, score: d.avgRating * d.timesOpened }));
+    if (mathMode) data.sort((a, b) => b.score - a.score || a.song.localeCompare(b.song));
     clearRows();
 
-    subtitleEl.textContent =
-      'Songs that have ' + metric.volumeLabel + ' in at least 10 Phish shows, ' +
-      'ranked by the average rating of those shows. Bar color shows how often ' +
-      'each song has ' + metric.volumeLabel +
-      ' \u2014 the number inside each bar is the exact count.';
-    footerEl.textContent =
-      'Source: Phish.net setlist and show-rating data. Bar length shows the ' +
-      'average user rating (0\u20135 scale) of shows where this song was the ' +
-      metric.position + '; bar color shows volume (lighter = fewer, darker = ' +
-      'more \u2014 see legend above). Shows flagged as non-standard (exclude) are ' +
-      'omitted. Limited to songs appearing in this position 10 or more times.';
+    let domainMax, ticks;
+    if (mathMode) {
+      const scoreMax = Math.max(...data.map((d) => d.score));
+      ({ domainMax, ticks } = niceCeilStep(scoreMax, 4));
+    } else {
+      domainMax = 5;
+      ticks = [0, 1, 2, 3, 4, 5];
+    }
+
+    if (mathMode) {
+      vsLabel.textContent = 'vs. average rating \u00d7 times played';
+      subtitleEl.textContent =
+        'Songs that have ' + metric.volumeLabel + ' in at least 10 Phish shows, ' +
+        'ranked by a combined score: average show rating \u00d7 number of times the ' +
+        'song ' + metric.volumeLabel + '. This rewards songs that are both ' +
+        'well-rated and frequently played. Hover or tap a bar for the individual ' +
+        'average rating and count.';
+      footerEl.textContent =
+        'Source: Phish.net setlist and show-rating data. Bar length shows average ' +
+        'rating \u00d7 times this song was the ' + metric.position + ' (a combined ' +
+        '\u201cquality \u00d7 volume\u201d score); hover or tap a bar for the average ' +
+        'rating and exact count. Shows flagged as non-standard (exclude) are omitted. ' +
+        'Limited to songs appearing in this position 10 or more times.';
+      axisTitleEl.textContent = 'Average rating \u00d7 times ' + metric.volumeLabel;
+      grid.setAttribute(
+        'aria-label',
+        'Bar chart of average show rating times times played for songs that were the ' +
+          metric.label,
+      );
+    } else {
+      vsLabel.textContent = 'vs. average show rating';
+      subtitleEl.textContent =
+        'Songs that have ' + metric.volumeLabel + ' in at least 10 Phish shows, ' +
+        'ranked by the average rating of those shows. Bar color shows how often ' +
+        'each song has ' + metric.volumeLabel +
+        ' \u2014 the number inside each bar is the exact count.';
+      footerEl.textContent =
+        'Source: Phish.net setlist and show-rating data. Bar length shows the ' +
+        'average user rating (0\u20135 scale) of shows where this song was the ' +
+        metric.position + '; bar color shows volume (lighter = fewer, darker = ' +
+        'more \u2014 see legend above). Shows flagged as non-standard (exclude) are ' +
+        'omitted. Limited to songs appearing in this position 10 or more times.';
+      axisTitleEl.textContent = 'Average show rating (0\u20135)';
+      grid.setAttribute(
+        'aria-label',
+        'Bar chart of average show rating for songs that were the ' + metric.label +
+          ', colored by how often',
+      );
+    }
     legendTitle.textContent = 'Times ' + metric.volumeLabel;
     tableCountHeader.textContent = 'Times ' + metric.volumeLabel;
-    grid.setAttribute(
-      'aria-label',
-      'Bar chart of average show rating for songs that were the ' + metric.label +
-        ', colored by how often',
-    );
+
+    for (const t of ticks) {
+      const pct = (t / domainMax) * 100;
+      const line = document.createElement('div');
+      line.className = 'line' + (t === 0 ? ' baseline' : '');
+      line.style.left = pct + '%';
+      gridlines.appendChild(line);
+
+      const span = document.createElement('span');
+      span.style.left = pct + '%';
+      span.textContent = mathMode ? t.toLocaleString() : t;
+      axisTicks.appendChild(span);
+    }
 
     const volumeValues = data.map((d) => d.timesOpened);
     const volumeMin = Math.min(...volumeValues);
@@ -532,18 +602,21 @@
         ? 1
         : (Math.sqrt(value) - Math.sqrt(volumeMin)) / (Math.sqrt(volumeMax) - Math.sqrt(volumeMin));
 
-    legendGradient.style.background =
-      'linear-gradient(to right, ' + VOLUME_RAMP.join(', ') + ')';
-    const legendMidValue =
-      Math.round((((Math.sqrt(volumeMin) + Math.sqrt(volumeMax)) / 2) ** 2) / 5) * 5;
-    const legendValues = legendMidValue > volumeMin && legendMidValue < volumeMax
-      ? [volumeMin, legendMidValue, volumeMax]
-      : [volumeMin, volumeMax];
-    for (const v of legendValues) {
-      const span = document.createElement('span');
-      span.style.left = (volumeToT(v) * 100) + '%';
-      span.textContent = v;
-      legendTicks.appendChild(span);
+    legend.style.display = mathMode ? 'none' : '';
+    if (!mathMode) {
+      legendGradient.style.background =
+        'linear-gradient(to right, ' + VOLUME_RAMP.join(', ') + ')';
+      const legendMidValue =
+        Math.round((((Math.sqrt(volumeMin) + Math.sqrt(volumeMax)) / 2) ** 2) / 5) * 5;
+      const legendValues = legendMidValue > volumeMin && legendMidValue < volumeMax
+        ? [volumeMin, legendMidValue, volumeMax]
+        : [volumeMin, volumeMax];
+      for (const v of legendValues) {
+        const span = document.createElement('span');
+        span.style.left = (volumeToT(v) * 100) + '%';
+        span.textContent = v;
+        legendTicks.appendChild(span);
+      }
     }
 
     gridlines.style.gridRow = '1 / ' + (data.length + 1);
@@ -564,34 +637,46 @@
       track.setAttribute('role', 'img');
       track.setAttribute(
         'aria-label',
-        d.song + ': average rating ' + d.avgRating.toFixed(2) +
-          ' over ' + d.timesOpened + ' shows',
+        mathMode
+          ? d.song + ': score ' + d.score.toFixed(1) + ' (rating ' + d.avgRating.toFixed(2) +
+            ' \u00d7 ' + d.timesOpened + ' shows)'
+          : d.song + ': average rating ' + d.avgRating.toFixed(2) +
+            ' over ' + d.timesOpened + ' shows',
       );
 
+      const barValue = mathMode ? d.score : d.avgRating;
       const fillColor = colorForT(volumeToT(d.timesOpened));
       const bar = document.createElement('div');
       bar.className = 'bar';
-      bar.style.width = (d.avgRating / domainMax * 100) + '%';
-      bar.style.background = fillColor;
-      const inlineLabel = document.createElement('span');
-      inlineLabel.className = 'bar-inline-label';
-      inlineLabel.style.color = pickInk(hexToRgb(fillColor));
-      inlineLabel.textContent = d.timesOpened + ' shows';
-      bar.appendChild(inlineLabel);
+      bar.style.width = (barValue / domainMax * 100) + '%';
+      bar.style.background = mathMode ? 'var(--series-1)' : fillColor;
+      if (!mathMode) {
+        const inlineLabel = document.createElement('span');
+        inlineLabel.className = 'bar-inline-label';
+        inlineLabel.style.color = pickInk(hexToRgb(fillColor));
+        inlineLabel.textContent = d.timesOpened + ' shows';
+        bar.appendChild(inlineLabel);
+      }
       track.appendChild(bar);
       grid.appendChild(track);
 
       const value = document.createElement('div');
       value.className = 'row-value';
       value.style.gridRow = String(rowLine);
-      value.textContent = d.avgRating.toFixed(2);
+      value.textContent = mathMode ? d.score.toFixed(1) : d.avgRating.toFixed(2);
       grid.appendChild(value);
 
       const showTip = (evt) => {
         const valueEl = tooltip.querySelector('.tt-value');
         const labelEl = tooltip.querySelector('.tt-label');
-        valueEl.textContent = d.avgRating.toFixed(2) + ' avg';
-        labelEl.textContent = d.song + ' \u00b7 ' + d.timesOpened + ' shows';
+        if (mathMode) {
+          valueEl.textContent = d.score.toFixed(1) + ' score';
+          labelEl.textContent =
+            d.song + ' \u00b7 ' + d.avgRating.toFixed(2) + ' avg \u00b7 ' + d.timesOpened + ' shows';
+        } else {
+          valueEl.textContent = d.avgRating.toFixed(2) + ' avg';
+          labelEl.textContent = d.song + ' \u00b7 ' + d.timesOpened + ' shows';
+        }
         const rect = track.getBoundingClientRect();
         const x = evt && evt.clientX ? evt.clientX : rect.left + bar.offsetWidth;
         tooltip.style.left = x + 'px';
@@ -613,9 +698,12 @@
       tdRating.textContent = d.avgRating.toFixed(2);
       const tdCount = document.createElement('td');
       tdCount.textContent = d.timesOpened;
+      const tdScore = document.createElement('td');
+      tdScore.textContent = d.score.toFixed(1);
       tr.appendChild(tdSong);
       tr.appendChild(tdRating);
       tr.appendChild(tdCount);
+      tr.appendChild(tdScore);
       tableBody.appendChild(tr);
     });
   }
@@ -624,16 +712,33 @@
     const requested = new URLSearchParams(window.location.search).get('metric');
     return requested && METRICS[requested] ? requested : 'set1Opener';
   }
+  function mathModeFromUrl() {
+    return new URLSearchParams(window.location.search).get('mode') === 'math';
+  }
 
-  const initialMetric = metricFromUrl();
-  metricSelect.value = initialMetric;
-  renderChart(initialMetric);
+  let currentMetric = metricFromUrl();
+  let mathMode = mathModeFromUrl();
+  metricSelect.value = currentMetric;
+  mathModeToggle.setAttribute('aria-pressed', String(mathMode));
+  mathModeToggle.textContent = mathMode ? 'Normal mode' : 'Math mode';
+  renderChart(currentMetric, mathMode);
 
   metricSelect.addEventListener('change', () => {
-    const key = metricSelect.value;
-    renderChart(key);
+    currentMetric = metricSelect.value;
+    renderChart(currentMetric, mathMode);
     const url = new URL(window.location.href);
-    url.searchParams.set('metric', key);
+    url.searchParams.set('metric', currentMetric);
+    window.history.replaceState(null, '', url);
+  });
+
+  mathModeToggle.addEventListener('click', () => {
+    mathMode = !mathMode;
+    mathModeToggle.setAttribute('aria-pressed', String(mathMode));
+    mathModeToggle.textContent = mathMode ? 'Normal mode' : 'Math mode';
+    renderChart(currentMetric, mathMode);
+    const url = new URL(window.location.href);
+    if (mathMode) url.searchParams.set('mode', 'math');
+    else url.searchParams.delete('mode');
     window.history.replaceState(null, '', url);
   });
 
